@@ -1,0 +1,11 @@
+Static voice demo — third-party assets
+
+Transformers.js 3.8.1 (Apache-2.0): https://github.com/huggingface/transformers.js
+ONNX Runtime Web 1.22.0-dev.20250409-89f8206ba4 (MIT): https://github.com/microsoft/onnxruntime
+Hugging Face Jinja 0.5.3 (MIT): https://github.com/huggingface/huggingface.js/tree/main/packages/jinja
+Whisper-tiny ONNX by Xenova at 5332fcc35e32a33b86612b9a57a89be7906102b1 (Apache-2.0): https://huggingface.co/Xenova/whisper-tiny
+Base OpenAI Whisper model (MIT): https://github.com/openai/whisper
+
+License and notice files are included alongside the associated runtime and model files.
+The prerecorded prompts are synthesized from the demo's scripts using Piper voices.
+No Piper model weights, microphone recordings or test fixtures are distributed.
