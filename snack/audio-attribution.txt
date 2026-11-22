@@ -1,0 +1,11 @@
+Original, unmodified MP3 recordings by Charles Kelly (CK), Tatoeba.
+Credit: https://www.manythings.org/tatoeba/
+License (all four): CC BY-NC-ND 3.0, https://creativecommons.org/licenses/by-nc-nd/3.0/
+
+apples-or-oranges.mp3   Do you like apples or oranges?  https://api.tatoeba.org/v1/audios/562065/file
+i-like-apples.mp3       I like apples.                https://api.tatoeba.org/v1/audios/17315/file
+i-like-oranges.mp3      I like oranges.               https://api.tatoeba.org/v1/audios/664900/file
+say-that-again.mp3      Could you say that again?     https://api.tatoeba.org/v1/audios/58233/file
+
+Speech recognition uses the already published same-origin /play/ model and runtime.
+See ../play/assets/ for the model and runtime notices.
