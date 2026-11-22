@@ -1,0 +1,4 @@
+Prompt recordings: locally synthesized from the original After School script.
+Kokoro 82M v1.1-zh: https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh
+Sherpa ONNX model conversion: https://huggingface.co/csukuangfj/kokoro-int8-multi-lang-v1_1/tree/1355334be009ccce397060ee639a874137a128fa
+See Kokoro-LICENSE.txt. The weights, synthesis runtime and microphone inputs are not distributed here.
