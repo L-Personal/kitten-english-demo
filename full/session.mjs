@@ -1,4 +1,4 @@
-import {advance, classify, cues, line, listenSeconds} from './flow.mjs';
+import {advance, classify, cues, line, listenSeconds, promptGuide} from './flow.mjs';
 import {localSpeech} from './speech.mjs';
 
 const NAMES = {
@@ -9,9 +9,9 @@ const NAMES = {
   here: 'here-you-are', thanks: 'thank-you', seeyou: 'see-you',
 };
 const ASK = new Set(['open', 'choose', 'howabout']);
-const dom = Object.fromEntries(['entry', 'round', 'status', 'sentence', 'progress', 'voice', 'touch',
-  'repeat', 'back', 'loading', 'audio', 'star', 'level-six', 'level-ten']
-  .map(id => [id, document.getElementById(id)]));
+const dom = Object.fromEntries(['entry', 'round', 'status', 'sentence', 'sentence-heard', 'sentence-tag',
+  'sentence-full', 'sentence-sub', 'progress', 'voice', 'touch', 'repeat', 'back', 'loading', 'audio',
+  'star', 'level-six', 'level-ten'].map(id => [id, document.getElementById(id)]));
 const fruitButtons = Object.fromEntries(['apple', 'orange'].map(fruit => [fruit, document.getElementById(`pick-${fruit}`)]));
 dom.choices = document.querySelector('.choices');
 const clip = cue => new URL(`./audio/${NAMES[cue]}.mp3`, import.meta.url).href;
@@ -29,13 +29,32 @@ function deadline(promise, ms) {
 }
 const isLive = (s, turn = s.turn) => round === s && s.turn === turn;
 
+function renderGuide(s, state) {
+  const guide = promptGuide(level, s.step, s.chosen);
+  if (!guide || state === 'done') {
+    dom.sentence.hidden = true;
+    return;
+  }
+  dom.sentence.hidden = false;
+  dom.sentence.dataset.active = String(state === 'listen');
+  dom['sentence-heard'].textContent = guide.heard;
+  dom['sentence-tag'].textContent = s.step === 'like-apple' || s.step === 'like-orange' ? '示范整句' : '说完整句子';
+  dom['sentence-full'].textContent = guide.full;
+  dom['sentence-sub'].textContent = guide.sub;
+}
+
+function listenBanner(id) {
+  if (id === 'howabout') return '🎤 现在轮到你说完整句子！（直接照着下面读）';
+  if (id === 'choose') return '🎤 现在请开口选水果！（说整句、单词，或点盘子）';
+  return '🎤 现在请开口回答！（说整句或一个词都行）';
+}
+
 function show(s, state, text) {
   s.state = state;
   dom.status.dataset.state = state;
   dom.status.textContent = text;
+  renderGuide(s, state);
   dom.progress.textContent = s.said ? `已听过 ${s.said} 句真人录音` : '';
-  // The plates stay tappable through the whole fruit question, including while a
-  // spoken answer is being decoded or after the microphone failed.
   const picking = s.step === 'choose' && ['listen', 'say', 'fallback', 'error'].includes(state);
   dom.choices?.classList.toggle('armed', picking);
   for (const [fruit, button] of Object.entries(fruitButtons)) {
@@ -66,6 +85,7 @@ function reset(focus = true) {
   closeAudio(s);
   dom.entry.hidden = false;
   dom.round.hidden = true;
+  dom.sentence.hidden = true;
   dom.star.hidden = true;
   for (const button of Object.values(fruitButtons)) {
     button.disabled = true;
@@ -82,6 +102,29 @@ function newTurn(s) {
 }
 
 // ---- audio ---------------------------------------------------------------
+function warmClip(s, cue) {
+  if (!s.context || s.clips.has(cue)) return s.clips.get(cue);
+  const context = s.context;
+  const p = (async () => {
+    const response = await fetch(clip(cue), {signal: s.abort.signal});
+    if (!response.ok) throw new Error('Missing voice clip');
+    return context.decodeAudioData(await response.arrayBuffer());
+  })();
+  p.catch(() => s.clips.delete(cue));
+  s.clips.set(cue, p);
+  return p;
+}
+function warmNextClips(s, id) {
+  if (!s.context) return;
+  const upcoming = id === 'open'
+    ? ['really', 'choose']
+    : id === 'choose'
+      ? ['apples', 'oranges', 'howabout']
+      : id === 'howabout'
+        ? [level === 'six' ? 'welldone' : 'goodideas', 'takeone', 'here', 'thanks', 'seeyou']
+        : [];
+  for (const cue of upcoming) warmClip(s, cue);
+}
 function native(s, cue) {
   const audio = dom.audio;
   return new Promise((resolve, reject) => {
@@ -126,16 +169,8 @@ function output(s, node, duration) {
 async function play(s, cue, turn, forceNative = false) {
   if (forceNative || !s.context) return native(s, cue);
   const context = s.context;
-  if (!s.clips.has(cue)) {
-    const p = (async () => {
-      const response = await fetch(clip(cue), {signal: s.abort.signal});
-      if (!response.ok) throw new Error('Missing voice clip');
-      return context.decodeAudioData(await response.arrayBuffer());
-    })();
-    p.catch(() => s.clips.delete(cue));
-    s.clips.set(cue, p);
-  }
-  const [buffer] = await deadline(Promise.all([s.clips.get(cue), s.unlocked]), 7600);
+  const clipPromise = warmClip(s, cue);
+  const [buffer] = await deadline(Promise.all([clipPromise, s.unlocked]), 7600);
   if (!isLive(s, turn)) return;
   if (context.state !== 'running') await deadline(context.resume(), 1500);
   if (!isLive(s, turn)) return;
@@ -143,19 +178,21 @@ async function play(s, cue, turn, forceNative = false) {
   source.buffer = buffer;
   await output(s, source, buffer.duration);
 }
-async function ding(s, turn) {
+function ding(s) {
   const context = s.context;
-  if (!context) return;
-  const buffer = context.createBuffer(1, Math.round(context.sampleRate * .18), context.sampleRate);
-  const tone = buffer.getChannelData(0);
-  for (let i = 0; i < tone.length; ++i) {
-    const time = i / context.sampleRate;
-    tone[i] = .18 * Math.sin(2 * Math.PI * 740 * time) * Math.min(1, time / .013) * Math.exp(-time * 24);
-  }
-  const source = context.createBufferSource();
-  source.buffer = buffer;
-  await output(s, source, buffer.duration);
-  if (!isLive(s, turn)) return;
+  if (!context || context.state !== 'running') return;
+  try {
+    const buffer = context.createBuffer(1, Math.round(context.sampleRate * .08), context.sampleRate);
+    const tone = buffer.getChannelData(0);
+    for (let i = 0; i < tone.length; ++i) {
+      const time = i / context.sampleRate;
+      tone[i] = .14 * Math.sin(2 * Math.PI * 780 * time) * Math.min(1, time / .01) * Math.exp(-time * 32);
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start();
+  } catch {}
 }
 
 // ---- flow ----------------------------------------------------------------
@@ -170,15 +207,18 @@ async function run(s, id, forceNative = false) {
   if (id === 'done') return finish(s);
   s.step = id;
   s.answer = null;
+  if (id === 'like-apple') s.chosen = 'apple';
+  if (id === 'like-orange') s.chosen = 'orange';
   const turn = newTurn(s);
-  show(s, 'play', line(level, id));
+  warmNextClips(s, id);
+  show(s, 'play', `🔊 先听他说：${line(level, id)}`);
   try {
     for (const cue of cues(level, id)) {
       if (!isLive(s, turn)) return;
       await play(s, cue, turn, forceNative);
       if (!isLive(s, turn)) return;
       s.said = (s.said || 0) + 1;
-      show(s, 'play', line(level, id));
+      show(s, 'play', `🔊 先听他说：${line(level, id)}`);
     }
   } catch {
     if (isLive(s, turn)) mediaFailed(s, '这句没播出来。点「再试一次」。');
@@ -191,11 +231,9 @@ async function run(s, id, forceNative = false) {
     return waitReady(s, id, turn);
   }
   if (id === 'choose') return promptChoice(s, turn);
-  // Without a microphone nothing can be answered, so the round treats each
-  // open question as acknowledged and keeps moving to the next recording.
   s.autoTimer = setTimeout(() => {
     if (isLive(s, turn)) advanceStep(s, id, s.voice ? 'empty' : 'any');
-  }, 1100);
+  }, 650);
 }
 function promptChoice(s, turn) {
   const text = s.voice ? '这句没等到。点苹果或橙子，接着玩。' : '点苹果或橙子，听下一句。';
@@ -205,12 +243,11 @@ function promptChoice(s, turn) {
   }, 20_000);
 }
 async function waitReady(s, id, turn) {
-  show(s, 'say', '语音还在准备，一准备好就轮到你。');
+  const pct = s.loadPct ? `（已完成 ${s.loadPct}%）` : '';
+  show(s, 'say', `⏳ 首次准备语音识别${pct}，马上就轮到你开口…`);
   try {
     await deadline(s.speech.ready, 30_000);
   } catch {
-    // Without a working microphone the round continues like the tap-only path
-    // instead of asking for a plate before the fruit question has played.
     if (isLive(s, turn)) { s.fault = fallback; advanceStep(s, id, 'any'); }
     return;
   }
@@ -218,11 +255,13 @@ async function waitReady(s, id, turn) {
   s.ready = true;
   return listen(s, id, turn);
 }
-async function listen(s, id, turn) {
+function listen(s, id, turn) {
   if (s.fault || !s.speech) return promptChoice(s, turn);
-  await ding(s, turn);
   if (!isLive(s, turn)) return;
-  show(s, 'listen', `轮到你了：${line(level, id)}`);
+  // Switch to the active microphone state immediately without waiting for a tone
+  // to finish first, so there is zero dead gap after the human prompt ends.
+  show(s, 'listen', listenBanner(id));
+  ding(s);
   s.speech.record(true);
   s.listenTimer = setTimeout(() => {
     if (isLive(s, turn)) advanceStep(s, id, 'empty');
@@ -233,6 +272,7 @@ function advanceStep(s, id, kind) {
   clearTimeout(s.autoTimer);
   s.speech?.record(false);
   s.cancelSound?.();
+  if (id === 'choose' && (kind === 'apple' || kind === 'orange')) s.chosen = kind;
   const next = advance(id, kind, s.misses || 0);
   s.misses = next.misses || 0;
   if (next.id === 'again') {
@@ -250,7 +290,8 @@ function finish(s) {
   closeAudio(s);
   s.state = 'done';
   dom.status.dataset.state = 'done';
-  dom.status.textContent = '这一轮说完了。想再听一遍也行，想换一档也行。';
+  dom.status.textContent = '这一轮说完了。想再玩一轮或换一档都行。';
+  dom.sentence.hidden = true;
   dom.progress.textContent = `这一轮一共 ${s.said} 句真人录音`;
   dom.star.hidden = false;
   dom.repeat.disabled = false;
@@ -263,9 +304,17 @@ async function heard(s, result) {
   const turn = s.turn;
   const id = s.step;
   if (result.kind !== 'speech') return advanceStep(s, id, 'empty');
-  show(s, 'think', '在听你说的这句…');
+  show(s, 'think', '✨ 听到了，马上回应你…');
   try {
-    const text = await s.speech.transcribe(result.audio);
+    const job = s.speech.transcribe(result.audio);
+    // Open-ended turns ('open' and 'howabout') advance on any spoken answer;
+    // cap the UI wait at 900 ms on slow phone CPUs while letting the worker finish.
+    const text = id === 'open' || id === 'howabout'
+      ? await Promise.race([
+        job,
+        new Promise(resolve => { setTimeout(() => resolve('ok'), 900); }),
+      ])
+      : await job;
     if (!isLive(s, turn)) return;
     advanceStep(s, id, classify(text));
   } catch {
@@ -276,7 +325,7 @@ async function heard(s, result) {
 function start(voice) {
   if (round) return;
   dom.repeat.textContent = '再听这句';
-  const s = round = {voice, turn: 0, misses: 0, said: 0, clips: new Map(), abort: new AbortController()};
+  const s = round = {voice, turn: 0, misses: 0, said: 0, chosen: null, loadPct: 0, clips: new Map(), abort: new AbortController()};
   dom.entry.hidden = true;
   dom.round.hidden = false;
   dom.star.hidden = true;
@@ -286,7 +335,18 @@ function start(voice) {
       s.context = new Audio();
       s.unlocked = s.context.resume();
       s.unlocked.catch(() => {});
-      s.speech = localSpeech(s.context, result => void heard(s, result), () => { if (isLive(s)) s.fault = fallback; });
+      s.speech = localSpeech(
+        s.context,
+        result => void heard(s, result),
+        () => { if (isLive(s)) s.fault = fallback; },
+        prog => {
+          if (!isLive(s) || !prog?.total) return;
+          s.loadPct = Math.min(99, Math.max(s.loadPct || 0, Math.round((prog.loaded / prog.total) * 100)));
+          if (s.state === 'say') {
+            dom.status.textContent = `⏳ 首次准备语音识别（已完成 ${s.loadPct}%），马上就轮到你开口…`;
+          }
+        },
+      );
       deadline(s.speech.ready, 45_000).then(() => {
         if (!isLive(s) || !s.speech) return;
         s.ready = true;
