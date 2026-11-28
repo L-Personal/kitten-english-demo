@@ -1,0 +1,23 @@
+Original, unmodified MP3 recordings by Charles Kelly (CK), Tatoeba.
+Credit: https://www.manythings.org/tatoeba/
+License (all tracks): CC BY-NC-ND 3.0, https://creativecommons.org/licenses/by-nc-nd/3.0/
+
+are-you-hungry.mp3          Are you hungry?              audio 34016
+what-did-you-do-today.mp3   What did you do today?       audio 139734
+really.mp3                  Really?                      audio 29413
+apples-or-oranges.mp3       Do you like apples or oranges?  audio 562065
+i-like-apples.mp3           I like apples.               audio 17315
+i-like-oranges.mp3          I like oranges.              audio 664900
+how-about-you.mp3           How about you?               audio 2956
+well-done.mp3               Well done.                   audio 236729
+you-have-good-ideas.mp3     You have good ideas.         audio 86658
+i-see.mp3                   I see.                       audio 102975
+could-you-say-that-again.mp3  Could you say that again?  audio 58233
+just-take-one.mp3           Just take one.               audio 87122
+here-you-are.mp3            Here you are.                audio 161431
+thank-you.mp3               Thank you.                   audio 83540
+see-you.mp3                 See you!                     audio 1188075
+
+Source for each file: https://api.tatoeba.org/v1/audios/<audio id>/file
+Speech recognition uses the already published same-origin /play/ model and runtime.
+See ../play/assets/ for the model and runtime notices.

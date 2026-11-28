@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f2e9">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'">
+<title>加餐时间 · 一轮英语对话</title>
+<style>
+:root{color-scheme:light;--paper:#f4f2e9;--ink:#243c33;--quiet:#495d52;--green:#195545;--line:#c0ccc0}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif}main{max-width:30rem;margin:auto;padding:clamp(12px,4vh,34px) 14px 18px}article{background:#fffdf7;padding:clamp(14px,4.5vw,24px);border:1px solid var(--line);border-radius:24px}h1,p,figure{margin:0}.kicker{font-size:13px;color:var(--quiet);font-weight:650;letter-spacing:.08em}h1{margin-top:4px;font-size:clamp(29px,7vw,37px);line-height:1.12;letter-spacing:-.025em}.lead{margin:9px 0 12px}.scene{position:relative;border-radius:15px;overflow:hidden}.scene svg{display:block;width:100%;height:auto}.choices{position:absolute;inset:29% 0 4%;display:grid;grid-template-columns:1fr 1fr;gap:4%;padding:0 4%}.fruit{align-items:end;background:transparent;color:var(--ink);border:2px solid transparent}.fruit span{border-radius:8px;padding:3px 9px;background:#fffdf2;border:1px solid #b7b4a1;font-size:clamp(12px,3.8vw,15px);white-space:nowrap}.fruit b{font-size:.88em;margin-left:4px;font-weight:550}.choices.armed .fruit:not(:disabled){border-style:dashed;border-color:#19554555}.choices.armed .fruit:not(:disabled) span{box-shadow:0 1px 0 #19554533,0 0 0 3px #19554522;animation:breathe 2.4s ease-in-out infinite alternate}.fruit:not(:disabled):active,.fruit[aria-pressed=true]{background:#fff9dd42;border-color:var(--green)}.fruit[aria-pressed=true] span{background:var(--green);color:#fff;border-color:var(--green)}.fruit:focus-visible{outline-offset:-4px}.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.level{background:#fffdf2;color:var(--ink);border:1px solid var(--line);font-weight:600}.level[aria-pressed=true]{background:#e7f0e9;border-color:var(--green);color:var(--green)}.level b{display:block;font-size:12px;font-weight:550;color:var(--quiet)}.level[aria-pressed=true] b{color:var(--green)}.controls{margin-top:12px;display:grid;gap:8px}button{min-height:46px;width:100%;padding:6px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;border:1px solid transparent;background:var(--green);color:#fff;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:disabled{cursor:default}button:focus-visible,a:focus-visible{outline:3px solid #9c501f;outline-offset:2px}.primary{min-height:52px}.secondary{background:transparent;color:var(--green);border-color:var(--line)}.quiet{background:transparent;color:var(--quiet);font-weight:600}.actions{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}.status{margin:0 0 2px;font-weight:650;min-height:2.6em}.status[data-state=done]{color:var(--green)}.status[data-state=error],.status[data-state=fallback]{color:#8a3b12}.progress{margin-top:6px;font-size:13px;color:var(--quiet)}.hint{font-size:13px;color:var(--quiet);margin-top:8px}footer{margin-top:12px;font-size:12px;color:var(--quiet);overflow-wrap:anywhere}footer a,p.hint a{color:var(--quiet)}.star{display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:650;color:var(--green)}.star svg{width:26px;height:26px}[hidden]{display:none!important}.status[data-state=play]::before,.status[data-state=say]::before,.status[data-state=think]::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:.12em;background:var(--green);animation:pulse 1.5s ease-in-out infinite alternate}@keyframes pulse{from{opacity:.35}to{opacity:1}}@keyframes breathe{from{box-shadow:0 1px 0 #19554533,0 0 0 2px #19554518}to{box-shadow:0 1px 0 #19554533,0 0 0 5px #19554533}}@media(prefers-reduced-motion:reduce){.status::before{animation:none!important}.choices.armed .fruit span{animation:none!important}}@media(max-width:350px){.choices{padding-inline:2%;gap:1.5%}.fruit span{padding-inline:6px}}
+</style>
+</head>
+<body>
+<main>
+<article aria-labelledby="title">
+<header><p class="kicker">英语小游戏</p><h1 id="title">加餐时间</h1></header>
+<p class="lead">一轮十来句真人录音，说单词、中文，或点水果都行。</p>
+<figure class="scene">
+<svg viewBox="0 0 640 340" width="640" height="340" role="img" aria-labelledby="fruit-title" xmlns="http://www.w3.org/2000/svg">
+<title id="fruit-title">餐桌上的一盘红苹果和一盘切开的橙子</title>
+<defs>
+<linearGradient id="wall" x2="0" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#dcebe0"/><stop offset="1" stop-color="#ebf0dd"/></linearGradient>
+<linearGradient id="apple" x2=".93" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#eb7d60"/><stop offset=".53" stop-color="#d95143"/><stop offset="1" stop-color="#aa322c"/></linearGradient>
+<linearGradient id="orange" x2=".7" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffd887"/><stop offset="1" stop-color="#ed8b48"/></linearGradient>
+<pattern id="cloth" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M0 13h26M13 0v26" stroke="#96a781" stroke-opacity=".36" stroke-width="2"/></pattern>
+</defs>
+<path fill="url(#wall)" d="M0 0h640v340H0z"/>
+<path fill="#fff3cb" opacity=".62" d="M0 12h174l185 149H236L0 90z"/>
+<path fill="#fff8da" opacity=".47" d="M188 12h63l176 149h-53z"/>
+<path fill="#dcb783" d="M0 148h640v192H0z"/>
+<path fill="#eed3a9" d="M0 158h640v182H0z"/>
+<g fill="none" stroke="#b77d56" stroke-width="2" opacity=".23" stroke-linecap="round"><path d="M0 187c103 11 207-13 327-6 63 3 221 14 313-1"/><path d="M0 307c129 9 186-9 319-5m183 5c64 3 95 1 138-5M26 326l154-1m345-4 91-2"/></g>
+<path d="M287 194l269-23 64 115-309 23z" fill="#7e9478" opacity=".22" transform="translate(0 5)"/>
+<path d="M287 194l269-23 64 115-309 23z" fill="#e6ebcf"/>
+<path d="M287 194l269-23 64 115-309 23z" fill="url(#cloth)"/>
+<g fill="#7d5b47" opacity=".22"><ellipse cx="178" cy="266" rx="126" ry="32"/><ellipse cx="466" cy="264" rx="132" ry="32"/></g>
+<ellipse cx="175" cy="249" rx="122" ry="43" fill="#ede7d6" stroke="#ae9578" stroke-width="2"/>
+<ellipse cx="175" cy="242" rx="122" ry="40" fill="#fff9e9"/>
+<ellipse cx="175" cy="243" rx="102" ry="29" fill="#f0eadb" stroke="#97a99b" stroke-width="3"/>
+<ellipse cx="465" cy="249" rx="126" ry="43" fill="#e3e7d8" stroke="#91a694" stroke-width="2"/>
+<ellipse cx="465" cy="242" rx="126" ry="40" fill="#faf9e6"/>
+<ellipse cx="465" cy="243" rx="105" ry="28" fill="#eeebd8" stroke="#aaba9c" stroke-width="3"/>
+<ellipse cx="175" cy="242" rx="64" ry="15" fill="#8c513e" opacity=".22"/>
+<ellipse cx="465" cy="242" rx="78" ry="15" fill="#8c513e" opacity=".2"/>
+<path d="M170 134c-29-19-64-1-69 31-6 42 21 82 52 88 12 2 17-4 23-4 7 0 13 5 24 2 31-7 52-48 48-81-4-36-41-53-65-37-5 4-8 4-13 1z" fill="url(#apple)" stroke="#a73b33" stroke-width="2"/>
+<path d="M176 137c-7-16-3-32 8-42" fill="none" stroke="#724d36" stroke-width="8" stroke-linecap="round"/>
+<path d="M177 121c9-30 38-37 58-27-10 23-29 32-58 27z" fill="#72975a" stroke="#55753f" stroke-width="2"/>
+<path d="M182 116c14-10 26-15 42-17M127 158q6-10 17-11" fill="none" stroke-linecap="round" stroke="#fff0ce" opacity=".49" stroke-width="4"/>
+<path d="M122 166q-9 24 5 44" fill="none" stroke="#f8a98b" opacity=".54" stroke-width="5" stroke-linecap="round"/>
+<circle cx="469" cy="175" r="57" fill="url(#orange)" stroke="#bd662d" stroke-width="2"/>
+<path d="M469 119c8-17 22-22 35-19-7 16-16 20-35 19z" fill="#6d945c" stroke="#55753f" stroke-width="2"/>
+<path d="M437 148q-13 15-11 28" stroke="#ffecaa" stroke-width="5" fill="none" stroke-linecap="round"/>
+<g fill="#b96c36" opacity=".36"><circle cx="491" cy="143" r="1.6"/><circle cx="510" cy="163" r="1.5"/><circle cx="500" cy="153" r="1.7"/><circle cx="514" cy="175" r="1.3"/><circle cx="502" cy="183" r="1.7"/></g>
+<g transform="translate(466 231) rotate(-15)">
+<path d="M-77-16C-49-59 22-69 70-23c-4 39-37 64-79 61-29-2-58-23-68-54z" fill="#e68841" stroke="#b9602c" stroke-width="2"/>
+<path d="M-77-16c24-42 96-56 147-7-24 36-94 45-147 7z" fill="#fff1bd" stroke="#d37b45" stroke-width="2"/>
+<path d="M-67-17C-38-50 23-57 59-23c-26 27-89 40-126 6z" fill="#f9a64c"/>
+<g stroke="#fff3c4" stroke-width="3" fill="none" stroke-linecap="round"><path d="M-8-20 59-23M-8-20l31-23M-8-20l-15-24M-8-20l-41-10M-8-20l-46 12M-8-20l-9 20M-8-20L21-5"/></g><ellipse cx="-8" cy="-20" rx="5" ry="3" fill="#fff3c4"/>
+</g>
+</svg>
+<div class="choices">
+<button class="fruit" id="pick-apple" type="button" disabled aria-pressed="false" aria-label="苹果"><span>苹果 <b lang="en">apple</b></span></button>
+<button class="fruit" id="pick-orange" type="button" disabled aria-pressed="false" aria-label="橙子"><span>橙子 <b lang="en">orange</b></span></button>
+</div>
+</figure>
+<div id="entry" hidden>
+<p class="hint" style="margin:0 0 6px">这一轮用哪一档</p>
+<div class="levels" role="group" aria-label="选择档位">
+<button class="level" id="level-six" type="button" aria-pressed="true">6 岁 <b>先说一句</b></button>
+<button class="level" id="level-ten" type="button" aria-pressed="false">10 岁 <b>你来定</b></button>
+</div>
+<div class="controls">
+<button class="primary" id="voice" type="button">开始语音</button>
+<button class="secondary" id="touch" type="button">只听一遍</button>
+<p class="hint">声音只在本机识别，不上传。第一次允许麦克风，之后开着页面就能玩。</p>
+</div>
+</div>
+<div class="controls" id="round" hidden>
+<p class="status" id="status" role="status" data-state="play"></p>
+<p class="sentence" id="sentence" lang="en" hidden></p>
+<p class="progress" id="progress" aria-live="polite"></p>
+<div class="star" id="star" hidden>
+<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#c08a12" d="M12 2.6l2.9 6.1 6.7.9-4.9 4.6 1.2 6.6L12 17.6 6.1 20.8l1.2-6.6L2.4 9.6l6.7-.9z"/></svg>
+<span id="star-text">这一轮下来，孩子已经开口好几次了。</span>
+</div>
+<div class="actions">
+<button class="secondary" id="repeat" type="button">再听这句</button>
+<button class="quiet" id="back" type="button">结束</button>
+</div>
+</div>
+<p class="hint" id="loading">正在打开游戏…</p>
+<noscript><p>请在支持 JavaScript 的手机浏览器里打开。</p></noscript>
+<audio id="audio" preload="none" aria-hidden="true"></audio>
+</article>
+<footer>真人录音：<a href="https://www.manythings.org/tatoeba/">Charles Kelly（Tatoeba）</a> · 原声未剪辑 · <a href="https://creativecommons.org/licenses/by-nc-nd/3.0/deed.en" style="white-space:nowrap">CC BY-NC-ND 3.0</a></footer>
+</main>
+<script type="module" src="./session.mjs"></script>
+</body>
+</html>
